@@ -1,0 +1,46 @@
+[
+  {
+    "id": "root",
+    "component": "Column",
+    "children": ["heading", "cards"]
+  },
+  {
+    "id": "heading",
+    "component": "Text",
+    "text": "# 항공편"
+  },
+  {
+    "id": "cards",
+    "component": "Row",
+    "children": {
+      "componentId": "flightCard",
+      "path": "/flights"
+    },
+    "align": "stretch"
+  },
+  {
+    "id": "flightCard",
+    "component": "FlightCard",
+    "airline": { "@path": "airline" },
+    "flightNumber": { "@path": "flightNumber" },
+    "origin": { "@path": "origin" },
+    "destination": { "@path": "destination" },
+    "departureTime": { "@path": "departureTime" },
+    "arrivalTime": { "@path": "arrivalTime" },
+    "duration": { "@path": "duration" },
+    "status": { "@path": "status" },
+    "price": { "@path": "price" },
+    "action": {
+      "event": {
+        "name": "book_flight",
+        "userMessage": "이 항공편을 예약 후보로 잡아 줘",
+        "context": {
+          "flightNumber": { "@path": "flightNumber" },
+          "origin": { "@path": "origin" },
+          "destination": { "@path": "destination" },
+          "price": { "@path": "price" }
+        }
+      }
+    }
+  }
+]

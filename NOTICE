@@ -1,0 +1,16 @@
+This playground adapts the CopilotKit LangGraph starter at
+examples/integrations/langgraph-python (MIT License, copyright Atai Barkai):
+
+https://github.com/CopilotKit/CopilotKit/tree/main/examples/integrations/langgraph-python
+
+The starter's LICENSE is preserved at the repository root. Files descended
+from that starter are marked in their headers. The CopilotKit CLI source is
+not included.
+
+A2UI is a specification from Google (https://a2ui.org/, Apache License 2.0).
+This repository does not vendor the A2UI specification or the @a2ui/web_core
+sources. Those ship inside the npm package @copilotkit/a2ui-renderer@1.90.2,
+which depends on @a2ui/web_core@0.15.0. The Apache-2.0 text for that package
+is in node_modules/@a2ui/web_core after install. Component schemas in
+agent/src/a2ui/schemas were written for this playground against the A2UI 1.0
+basic catalog; they are not copies of the specification files.

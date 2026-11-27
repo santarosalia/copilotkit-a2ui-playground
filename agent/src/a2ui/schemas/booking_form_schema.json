@@ -1,0 +1,91 @@
+[
+  {
+    "id": "root",
+    "component": "Card",
+    "child": "body"
+  },
+  {
+    "id": "body",
+    "component": "Column",
+    "children": [
+      "note",
+      "title",
+      "name",
+      "email",
+      "date",
+      "seats",
+      "window",
+      "submit"
+    ]
+  },
+  {
+    "id": "note",
+    "component": "StatusPill",
+    "text": { "@path": "/form/note" },
+    "tone": "info"
+  },
+  {
+    "id": "title",
+    "component": "Text",
+    "text": "# 출장 예약"
+  },
+  {
+    "id": "name",
+    "component": "TextField",
+    "label": "이름",
+    "value": { "@path": "/form/name" },
+    "placeholder": "홍길동"
+  },
+  {
+    "id": "email",
+    "component": "TextField",
+    "label": "이메일",
+    "value": { "@path": "/form/email" },
+    "placeholder": "you@example.com"
+  },
+  {
+    "id": "date",
+    "component": "DateTimeInput",
+    "value": { "@path": "/form/date" },
+    "enableDate": true,
+    "enableTime": false
+  },
+  {
+    "id": "seats",
+    "component": "Slider",
+    "label": "인원",
+    "min": 1,
+    "max": 6,
+    "value": { "@path": "/form/seats" }
+  },
+  {
+    "id": "window",
+    "component": "CheckBox",
+    "label": "창가 좌석",
+    "value": { "@path": "/form/windowSeat" }
+  },
+  {
+    "id": "submitLabel",
+    "component": "Text",
+    "text": "예약 요청"
+  },
+  {
+    "id": "submit",
+    "component": "Button",
+    "child": "submitLabel",
+    "variant": "primary",
+    "action": {
+      "event": {
+        "name": "submit_booking",
+        "userMessage": "이 내용으로 예약을 확인해 줘",
+        "context": {
+          "name": { "@path": "/form/name" },
+          "email": { "@path": "/form/email" },
+          "date": { "@path": "/form/date" },
+          "seats": { "@path": "/form/seats" },
+          "windowSeat": { "@path": "/form/windowSeat" }
+        }
+      }
+    }
+  }
+]
