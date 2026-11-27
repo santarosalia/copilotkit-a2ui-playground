@@ -1,0 +1,40 @@
+[
+  {
+    "id": "root",
+    "component": "Column",
+    "children": ["heading", "total", "metrics", "alert"]
+  },
+  {
+    "id": "heading",
+    "component": "Text",
+    "text": { "@path": "/title" }
+  },
+  {
+    "id": "total",
+    "component": "PriceTag",
+    "amount": { "@path": "/total" },
+    "caption": "예상 합계"
+  },
+  {
+    "id": "metrics",
+    "component": "List",
+    "direction": "vertical",
+    "children": {
+      "componentId": "metric",
+      "path": "/metrics"
+    }
+  },
+  {
+    "id": "metric",
+    "component": "MetricTile",
+    "label": { "@path": "label" },
+    "value": { "@path": "value" },
+    "hint": { "@path": "hint" }
+  },
+  {
+    "id": "alert",
+    "component": "StatusPill",
+    "text": { "@path": "/alert" },
+    "tone": "warn"
+  }
+]

@@ -1,0 +1,42 @@
+[project]
+name = "a2ui-playground-agent"
+version = "0.1.0"
+description = "LangGraph agent that emits A2UI 1.0 operations for the CopilotKit playground."
+requires-python = ">=3.12"
+dependencies = [
+  "langchain==1.4.0",
+  "langgraph==1.2.11",
+  "openai==1.109.1",
+  "fastapi>=0.115.5,<1.0.0",
+  "uvicorn>=0.29.0,<1.0.0",
+  "python-dotenv>=1.0.0,<2.0.0",
+  "langgraph-cli[inmem]==0.4.21",
+  "langchain-openai==1.1.9",
+  "copilotkit==0.1.96",
+  # Pin explicitly. copilotkit 0.1.96's LangGraphAGUIAgent.__init__ accepts only
+  # (name, graph, description, config). ag-ui-langgraph 0.0.43's clone() — called
+  # on every request — forwards enable_legacy_on_interrupt_event and sibling flags
+  # unconditionally, so every run 500s. 0.0.44 matches this starter and stays put.
+  # Do not float to 0.0.45: its A2UI history repair sends dict messages under
+  # __overwrite__, which LangGraph 1.2.11 stores without add_messages conversion.
+  "ag-ui-langgraph[fastapi]==0.0.44",
+  "ag-ui-protocol==0.1.22",
+  "langgraph-api==0.7.101",
+]
+
+[dependency-groups]
+dev = ["pytest==8.4.2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-data]
+src = ["a2ui/*.json", "a2ui/schemas/*.json"]

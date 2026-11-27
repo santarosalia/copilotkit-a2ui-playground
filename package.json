@@ -1,0 +1,51 @@
+{
+  "name": "copilotkit-a2ui-playground",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public playground for A2UI 1.0 surfaces carried over AG-UI by CopilotKit.",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:ui\" \"npm run dev:agent\" --names ui,agent --prefix-colors blue,green --kill-others",
+    "dev:ui": "next dev --turbopack",
+    "dev:agent": "bash scripts/run-agent.sh",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "test": "vitest run",
+    "test:agent": "uv run --directory agent pytest",
+    "install:agent": "bash scripts/setup-agent.sh",
+    "postinstall": "npm run install:agent"
+  },
+  "dependencies": {
+    "@copilotkit/a2ui-renderer": "1.90.2",
+    "@copilotkit/react-core": "1.90.2",
+    "@copilotkit/runtime": "1.90.2",
+    "hono": "^4.12.10",
+    "next": "16.3.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@langchain/langgraph-cli": "1.1.11",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^9.1.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.8",
+    "happy-dom": "^20.0.10",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "@a2ui/web_core": "0.15.0",
+    "@ag-ui/client": "1.0.5",
+    "@ag-ui/core": "1.0.5",
+    "@ag-ui/encoder": "1.0.5",
+    "@ag-ui/proto": "1.0.5"
+  }
+}
