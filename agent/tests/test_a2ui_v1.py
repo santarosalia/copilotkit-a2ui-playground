@@ -24,9 +24,6 @@ from src.a2ui_v1 import (
     update_data_model,
     upgrade_components,
 )
-from src.model import DEFAULT_MODEL_SPEC, parse_agent_model, resolve_model_spec
-
-
 FLIGHTS = [
     {
         "airline": "KE",
@@ -160,12 +157,3 @@ def test_upgrade_rewrites_bindings_but_not_child_templates() -> None:
     assert upgraded[1]["extra"]["@call"] == "formatString"
     assert upgraded[1]["extra"]["args"]["value"] == {"@path": "/title"}
 
-
-def test_default_model_spec_is_configurable(monkeypatch: pytest.MonkeyPatch) -> None:
-    assert DEFAULT_MODEL_SPEC == "openai:gpt-6-luna"
-    monkeypatch.delenv("COPILOTKIT_AGENT_MODEL", raising=False)
-    assert resolve_model_spec() == "openai:gpt-6-luna"
-    monkeypatch.setenv("COPILOTKIT_AGENT_MODEL", "openai:gpt-6-luna")
-    assert parse_agent_model(resolve_model_spec()) == ("openai", "gpt-6-luna")
-    with pytest.raises(ValueError):
-        parse_agent_model("not-a-spec")

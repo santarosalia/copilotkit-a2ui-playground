@@ -2,7 +2,7 @@
 
 CopilotKit과 LangGraph(Python)로 [A2UI 1.0](https://a2ui.org/specification/v1.0-a2ui/) 표면을 채팅에서 띄우고, 그 와이어 메시지를 옆에서 읽는 공개 예제입니다.
 
-유료로 필요한 것은 LLM API 키뿐입니다. 키가 없어도 오른쪽의 **샘플 재생**으로 같은 스키마를 렌더할 수 있습니다. CopilotKit Cloud, LangSmith, MCP 서버는 쓰지 않습니다.
+채팅의 기본 모델은 로컬 [vLLM](https://docs.vllm.ai/) 서버입니다. OpenAI 키는 없어도 됩니다. vLLM이 꺼져 있어도 오른쪽 **샘플 재생**은 같은 스키마를 그립니다. CopilotKit Cloud, LangSmith, MCP 서버는 쓰지 않습니다.
 
 이 저장소는 [CopilotKit의 LangGraph Python 스타터](https://github.com/CopilotKit/CopilotKit/tree/main/examples/integrations/langgraph-python) (`examples/integrations/langgraph-python`, MIT)를 바탕으로 만들었습니다. CLI 소스는 넣지 않았고, 아카이브된 `with-a2a-a2ui` 예제도 쓰지 않았습니다. 출처는 [NOTICE](NOTICE)와 [LICENSE](LICENSE)에 있습니다.
 
@@ -61,18 +61,50 @@ sequenceDiagram
 
 ## 실행
 
-Node.js 22, Python 3.12, [uv](https://docs.astral.sh/uv/)가 필요합니다.
+Node.js 22, Python 3.12, [uv](https://docs.astral.sh/uv/)가 필요합니다. 채팅을 쓸 때는 GPU에서 vLLM이 떠 있어야 합니다.
 
 ```bash
 cp .env.example .env
-# .env에 OPENAI_API_KEY를 넣습니다. 샘플만 볼 거면 비워 두어도 됩니다.
 npm install
 npm run dev
 ```
 
 `npm install`은 에이전트 가상환경까지 만듭니다. `npm run dev`는 Next.js(3000)와 LangGraph(8123, `AGENT_URL`)를 같이 띄웁니다. 브라우저에서 [http://localhost:3000](http://localhost:3000)을 엽니다.
 
-모델은 `COPILOTKIT_AGENT_MODEL`입니다. 기본값은 `openai:gpt-6-luna`이고, 2026-11-27 OpenAI 모델 문서 기준으로 유효한 id입니다. Chat Completions에서 함수 호출을 쓰므로 Luna에는 `reasoning_effort=none`을 붙입니다. OpenAI 호환 서버는 `OPENAI_BASE_URL`과 `openai:<모델 id>` 조합으로 가리킵니다. Anthropic과 Google 파서는 들어 있지만, 이 이미지에 설치된 모델 패키지는 `langchain-openai`뿐입니다.
+### 로컬 vLLM
+
+에이전트는 LangChain `ChatOpenAI`로 `VLLM_BASE_URL`의 OpenAI 호환 API를 호출합니다. `.env.example` 기본값은 다음과 같습니다.
+
+```bash
+VLLM_BASE_URL=http://localhost:8000/v1
+VLLM_MODEL=Qwen/Qwen3-8B
+VLLM_API_KEY=dummy
+```
+
+`VLLM_API_KEY`는 비우면 `dummy`입니다. vLLM은 이 값을 검사하지 않습니다. `VLLM_BASE_URL`이 있으면 OpenAI 설정보다 우선합니다. 셋 다 없으면 코드도 같은 로컬 기본값으로 갑니다.
+
+A2UI는 도구 호출로 표면을 만듭니다. vLLM은 자동 도구 선택을 기본으로 켜 두지 않습니다. [도구 호출 문서](https://docs.vllm.ai/en/stable/features/tool_calling/)와 [Qwen3 함수 호출 안내](https://github.com/QwenLM/Qwen3/blob/main/docs/source/framework/function_call.md) 기준으로, Qwen3 채팅 모델은 Hermes 파서입니다.
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --enable-auto-tool-choice \
+  --tool-call-parser hermes \
+  --reasoning-parser qwen3
+```
+
+모델마다 파서가 다릅니다. Qwen2.5도 `hermes`입니다. Qwen3-Coder는 안정 문서의 `qwen3_xml`입니다. Llama 3.1은 `llama3_json`과 도구용 chat template이 필요합니다. 파서가 모델과 다르면 도구 인자 JSON이 깨집니다.
+
+Qwen3 채팅 모델은 생각 모드가 도구 호출과 겹칩니다. 에이전트는 모델 이름에 `Qwen3`가 있고 `Coder`가 아니면 `chat_template_kwargs.enable_thinking=false`를 보냅니다. 도구 호출이 있는 턴은 스트리밍하지 않습니다. 델타로 쪼개진 JSON이 자주 잘리기 때문입니다. 한 응답의 상한은 `VLLM_MAX_TOKENS`(기본 4096)입니다. 그래도 JSON이 끊기면 채팅 위의 배너에 파서 플래그를 적습니다.
+
+GPU가 있으면 선택 사항인 `docker-compose.vllm.yml`로 같은 플래그의 서버를 띄울 수 있습니다. `npm run dev`는 이 파일을 실행하지 않습니다.
+
+```bash
+docker compose -f docker-compose.vllm.yml up
+```
+
+### OpenAI로 바꿀 때
+
+`VLLM_BASE_URL`을 비우고 `OPENAI_API_KEY`를 넣으면 OpenAI로 갑니다. `COPILOTKIT_AGENT_MODEL` 기본 후보는 `openai:gpt-6-luna`이고, 2026-11-27 OpenAI 문서 기준으로 유효한 id입니다. Chat Completions 도구 호출에는 `reasoning_effort=none`을 붙입니다. 이 이미지에 설치된 모델 패키지는 `langchain-openai`뿐입니다.
 
 `CPK_INTELLIGENCE_API_KEY`가 없으면 런너는 `InMemoryAgentRunner`입니다. 그 모드의 스레드 목록은 로컬 한 명용으로 `threads.access: "open"`입니다. 여러 사람이 이 서버에 닿으면 그 설정은 쓰지 마세요.
 
@@ -112,7 +144,7 @@ npm run dev
 
 ## 스크린샷
 
-샘플 재생입니다. 이 환경에는 LLM 키가 없어 실제 모델 호출은 하지 않았습니다. 바인딩과 버튼 컨텍스트는 브라우저에서 확인했습니다. `이 편 선택`은 `book_flight` 컨텍스트에 `KE001` / `ICN` / `HND` / `$240`을 넣었고, `예약 요청`은 이름, 이메일, `2026-12-03`, 인원 1, 창가 좌석 `true`를 `submit_booking`으로 돌려보냈습니다.
+샘플 재생입니다. 배너 문구는 이후 vLLM 기본 경로로 바뀌었습니다. 이 환경에는 vLLM과 OpenAI 키가 없어 실제 모델 호출은 하지 않았습니다. 바인딩과 버튼 컨텍스트는 브라우저에서 확인했습니다. `이 편 선택`은 `book_flight` 컨텍스트에 `KE001` / `ICN` / `HND` / `$240`을 넣었고, `예약 요청`은 이름, 이메일, `2026-12-03`, 인원 1, 창가 좌석 `true`를 `submit_booking`으로 돌려보냈습니다.
 
 ![항공편 카드와 와이어](docs/screenshots/flight.png)
 

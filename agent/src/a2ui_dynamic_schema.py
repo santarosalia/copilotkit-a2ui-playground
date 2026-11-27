@@ -27,7 +27,7 @@ from src.a2ui_v1 import (
     update_data_model,
     upgrade_components,
 )
-from src.model import create_chat_model
+from src.model import create_chat_model, explain_tool_call_failure
 
 V1_GUIDELINES = """
 Generate A2UI version 1.0 components for catalog playground://a2ui-catalog-v1.
@@ -77,11 +77,31 @@ def generate_a2ui(runtime: ToolRuntime[Any]) -> str:
 
     model = create_chat_model()
     model_with_tool = model.bind_tools([render_a2ui], tool_choice="render_a2ui")
-    response = model_with_tool.invoke([SystemMessage(content=prompt), *messages])
+    try:
+        response = model_with_tool.invoke([SystemMessage(content=prompt), *messages])
+    except Exception as exc:  # noqa: BLE001 — surface a short reason, do not dump the payload
+        return json.dumps({"error": explain_tool_call_failure(str(exc))}, ensure_ascii=False)
     if not getattr(response, "tool_calls", None):
-        return json.dumps({"error": "LLM did not call render_a2ui"})
+        return json.dumps(
+            {"error": explain_tool_call_failure("LLM did not call render_a2ui")},
+            ensure_ascii=False,
+        )
 
-    args = response.tool_calls[0]["args"]
+    raw_args = response.tool_calls[0]["args"]
+    if isinstance(raw_args, str):
+        try:
+            raw_args = json.loads(raw_args)
+        except json.JSONDecodeError as exc:
+            return json.dumps(
+                {"error": explain_tool_call_failure(str(exc))},
+                ensure_ascii=False,
+            )
+    if not isinstance(raw_args, dict):
+        return json.dumps(
+            {"error": explain_tool_call_failure("tool arguments were not an object")},
+            ensure_ascii=False,
+        )
+    args = raw_args
     surface_id = str(args.get("surfaceId") or "dynamic-surface")
     catalog_id = str(args.get("catalogId") or CATALOG_ID)
     components = upgrade_components(list(args.get("components") or []))

@@ -7,6 +7,7 @@ import {
 } from "@copilotkit/react-core/v2";
 import { useState } from "react";
 import type { Readiness } from "@/lib/readiness";
+import { explainRunError } from "@/lib/run-error";
 import {
   SAMPLE_OPERATIONS,
   sampleFrames,
@@ -69,7 +70,7 @@ export function Playground({ initialReady }: { initialReady: Readiness }) {
       await copilotkit.runAgent({ agent });
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "요청에 실패했습니다.";
-      setError(message);
+      setError(explainRunError(message));
     } finally {
       setSending(false);
     }
@@ -91,14 +92,22 @@ export function Playground({ initialReady }: { initialReady: Readiness }) {
         </div>
         <p className="pin">
           protocol 1.0
-          <span>{ready.model}</span>
+          <span>
+            {ready.provider === "vllm" ? "vLLM" : "OpenAI"} · {ready.model}
+          </span>
         </p>
       </header>
 
-      {!ready.llmConfigured ? (
+      {ready.provider === "vllm" ? (
         <p className="banner" role="status">
-          OPENAI_API_KEY가 없습니다. 샘플 재생은 그대로 동작합니다. 채팅 시나리오는
-          키를 넣은 뒤 <span className="mono">npm run dev</span>를 다시 시작하세요.
+          채팅은 로컬 vLLM <span className="mono">{ready.model}</span>
+          {" "}(<span className="mono">{ready.baseUrl}</span>)로 갑니다. 서버에{" "}
+          <span className="mono">--enable-auto-tool-choice --tool-call-parser hermes</span>
+          가 있어야 표면이 나옵니다. 샘플 재생은 서버 없이 됩니다.
+        </p>
+      ) : !ready.llmConfigured ? (
+        <p className="banner" role="status">
+          OpenAI로 가도록 했지만 OPENAI_API_KEY가 없습니다. 샘플 재생은 그대로 동작합니다.
         </p>
       ) : null}
       {error ? (

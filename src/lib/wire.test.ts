@@ -82,15 +82,29 @@ describe("wire frames", () => {
 });
 
 describe("readiness", () => {
-  it("reports whether an LLM key is configured without returning it", () => {
-    const ready = readinessFromEnv({
+  it("prefers vLLM and never returns a secret", () => {
+    const vllm = readinessFromEnv({
+      VLLM_BASE_URL: "http://localhost:8000/v1/",
+      VLLM_MODEL: "Qwen/Qwen3-8B",
+      VLLM_API_KEY: "local-secret",
+      OPENAI_API_KEY: "sk-test",
+    });
+    expect(vllm.provider).toBe("vllm");
+    expect(vllm.llmConfigured).toBe(true);
+    expect(vllm.model).toBe("Qwen/Qwen3-8B");
+    expect(vllm.baseUrl).toBe("http://localhost:8000/v1");
+    expect(JSON.stringify(vllm)).not.toContain("local-secret");
+    expect(JSON.stringify(vllm)).not.toContain("sk-test");
+
+    const fallback = readinessFromEnv({
       OPENAI_API_KEY: "sk-test",
       COPILOTKIT_AGENT_MODEL: "openai:gpt-6-luna",
     });
-    expect(ready.llmConfigured).toBe(true);
-    expect(ready.model).toBe("openai:gpt-6-luna");
-    expect(JSON.stringify(ready)).not.toContain("sk-test");
-    expect(readinessFromEnv({}).llmConfigured).toBe(false);
-    expect(readinessFromEnv({}).model).toBe("openai:gpt-6-luna");
+    expect(fallback.provider).toBe("openai");
+    expect(fallback.model).toBe("openai:gpt-6-luna");
+    expect(JSON.stringify(fallback)).not.toContain("sk-test");
+
+    expect(readinessFromEnv({}).provider).toBe("vllm");
+    expect(readinessFromEnv({}).model).toBe("Qwen/Qwen3-8B");
   });
 });

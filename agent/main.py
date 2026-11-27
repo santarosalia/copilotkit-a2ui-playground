@@ -17,6 +17,8 @@ from src.a2ui_fixed_schema import (
 )
 from src.model import create_chat_model
 
+# parallel_tool_calls is an OpenAI Chat Completions flag. The vLLM path
+# ignores these kwargs and disables streaming only for tool-call turns.
 model = create_chat_model(model_kwargs={"parallel_tool_calls": False})
 
 SYSTEM_PROMPT = """
